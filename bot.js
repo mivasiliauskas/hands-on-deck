@@ -54,7 +54,7 @@ function postImage(name, link, msg = null) {
 
 function postEmoji(name, link, msg = null) {
   console.log('emoji')
-  const channel = msg == null ? defaultChannel : msg.channel.guild;
+  const channel = msg == null ? defaultChannel : msg.channel;
 
   console.log(emojiNames)
   if (!emojiNames[link]) {
