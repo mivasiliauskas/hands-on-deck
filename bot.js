@@ -4,23 +4,32 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 let defaultChannel;
-let deckChannel;
-let deckChannelName;
 
 let decks = {}
 let attachments = {}
+const emojis = {}
+const emojiNames = {}
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
+  if (client.user.tag.includes('Test')) {
+    defaultChannel = client.channels.find(c => c.name == 'test')
+    const deckChannel = client.channels.find(c => c.name == 'data')
+    initDeck(deckChannel).then(() => drawRandom('fate'))
 
-  defaultChannel = client.channels.find(c => c.name == 'test')
+  }
 });
 
 function drawRandom(deckName, msg = null) {
   let deck = decks[deckName]
   let index = Math.floor(Math.random() * deck.length)
   let card = deck[index];
-  postImage(card.name, card.link, msg)
+  if (!card.displayType || card.displayType === 'image') {
+    postImage(card.name, card.link, msg)
+  }
+  if (card.displayType === 'emoji') {
+    postEmoji(card.name, card.link, msg)
+  }
 }
 
 function postImage(name, link, msg = null) {
@@ -35,10 +44,32 @@ function postImage(name, link, msg = null) {
   let content = {
     embed: attachments[link]
   }
-  if (msg != null) {
+
+  if (msg) {
     msg.reply(content).catch(console.error)
   } else {
     defaultChannel.send(content).catch(console.error)
+  }
+}
+
+function postEmoji(name, link, msg = null) {
+  console.log('emoji')
+  const channel = defaultChannel;
+
+  if (!emojiNames[link]) {
+    console.log('reg')
+
+    const emojiName = 'token' + Object.keys(emojiNames).length
+    channel.guild.createEmoji(link, emojiName).then(emoji => {
+      emojiNames[link] = `<:${emojiName}:${emoji.id}>`
+      postEmoji(name, link, msg)
+    }).catch(console.error)
+    return
+  }
+  if (msg) {
+    msg.reply(emojiNames[link]).catch(console.error)
+  } else {
+    defaultChannel.send(emojiNames[link]).catch(console.error)
   }
 }
 
@@ -50,7 +81,6 @@ client.on('message', msg => {
 
     args = args.splice(1);
     switch (cmd) {
-      case 'roll':
       case 'draw':
         handleDrawCommand(msg, ...args)
         break;
@@ -69,40 +99,54 @@ function handleDrawCommand(msg, deckName) {
   }
 }
 
-function initNewDeck(name, ...args) {
-  const deck = args.map(link => {
+function initNewDeck(options) {
+  const deck = options.cards.map(link => {
     let name = link.split('/').pop()
     if (!link.startsWith('https://')) {
       link = 'https://' + link
     }
+    const displayType = options.displayType
     return {
       name,
-      link
+      link,
+      displayType
     }
   })
 
-  decks[name] = deck
+  decks[options.name] = deck
 }
 
-function initDeckChannel(msg, name){
-  deckChannelName = name
-  deckChannel = msg.guild.channels.find(c => c.name == deckChannelName)
+function initDeckChannel(msg, name) {
+  const deckChannelName = name
+  const deckChannel = msg.guild.channels.find(c => c.name == deckChannelName)
   if (!deckChannel) {
     msg.reply(`Channel '${name}' not found`).catch(console.error)
     return
   }
 
   // console.log(msg.channel.messages)
-  deckChannel.fetchMessages({ limit: 1 }).then(messages => {
+  initDeck(deckChannel, msg)
+}
+
+client.login(process.env.BOT_TOKEN)
+
+function initDeck(channel, msg = null) {
+  channel.guild.emojis.forEach(e => {
+    channel.guild.deleteEmoji(e.id)
+    console.log(e.name)
+  })
+
+  return channel.fetchMessages({
+    limit: 1
+  }).then(messages => {
     let lastMessage = messages.first();
     let data = JSON.parse(lastMessage.content)
     let report = "Creating decks..."
     data.forEach(d => {
-      initNewDeck(d.name, ...d.cards)
+      initNewDeck(d)
       report += `\nDeck '${d.name}' created with ${d.cards.length} cards`
     })
-    msg.reply(report).catch(console.error)
+    if (msg)
+      msg.reply(report).catch(console.error)
   })
 }
-
-client.login(process.env.BOT_TOKEN)
