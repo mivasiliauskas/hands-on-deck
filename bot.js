@@ -9,6 +9,7 @@ let decks = {}
 let attachments = {}
 const emojis = {}
 const emojiNames = {}
+const emojiPrefix = "hodToken"
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -16,7 +17,6 @@ client.on('ready', () => {
     defaultChannel = client.channels.find(c => c.name == 'test')
     const deckChannel = client.channels.find(c => c.name == 'data')
     initDeck(deckChannel).then(() => drawRandom('fate'))
-
   }
 });
 
@@ -60,7 +60,7 @@ function postEmoji(name, link, msg = null) {
   if (!emojiNames[link]) {
     console.log('reg')
 
-    const emojiName = 'token' + Object.keys(emojiNames).length
+    const emojiName = emojiPrefix + Object.keys(emojiNames).length
     channel.guild.createEmoji(link, emojiName).then(emoji => {
       emojiNames[link] = `<:${emojiName}:${emoji.id}>`
       postEmoji(name, link, msg)
@@ -133,8 +133,10 @@ client.login(process.env.BOT_TOKEN)
 
 function initDeck(channel, msg = null) {
   channel.guild.emojis.forEach(e => {
-    channel.guild.deleteEmoji(e.id)
-    console.log(e.name)
+    if (e.name.startsWith(emojiPrefix)) {
+      channel.guild.deleteEmoji(e.id)
+      console.log(e.name)
+    }
   })
 
   return channel.fetchMessages({
