@@ -23,16 +23,16 @@ client.on('ready', () => {
     console.log(Deck)
     var deck = new Deck()
     deck.ping()
-
-    client.guilds.forEach(g => {
-      const dataChannel = g.channels.find(c => c.name === dataChannelName)
-      console.log(JSON.stringify(dataChannel))
-      if (dataChannel)
-        initDeck(dataChannel)
-      else 
-        console.log(`No channel '${dataChannelName}' found`)
-    })
   }
+  
+  client.guilds.forEach(g => {
+    const dataChannel = g.channels.find(c => c.name === dataChannelName)
+    console.log(JSON.stringify(dataChannel))
+    if (dataChannel)
+      initDeck(dataChannel)
+    else 
+      console.log(`No channel '${dataChannelName}' found`)
+  })
 });
 
 function drawRandom(deckName, msg = null) {
