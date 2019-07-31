@@ -1,9 +1,12 @@
 require('dotenv').config()
 
+const Deck = require('./deck')
+
 const Discord = require('discord.js');
 const client = new Discord.Client();
-
 let defaultChannel;
+
+const dataChannelName = 'hod-data'
 
 let decks = {}
 let attachments = {}
@@ -14,9 +17,21 @@ const emojiPrefix = "hodToken"
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
   if (client.user.tag.includes('Test')) {
-    defaultChannel = client.channels.find(c => c.name == 'test')
-    const deckChannel = client.channels.find(c => c.name == 'data')
-    initDeck(deckChannel).then(() => drawRandom('fate'))
+    // defaultChannel = client.channels.find(c => c.name == 'test')
+    // const deckChannel = client.channels.find(c => c.name == 'data')
+    // initDeck(deckChannel).then(() => drawRandom('fate'))
+    console.log(Deck)
+    var deck = new Deck()
+    deck.ping()
+
+    client.guilds.forEach(g => {
+      const dataChannel = g.channels.find(c => c.name === dataChannelName)
+      console.log(JSON.stringify(dataChannel))
+      if (dataChannel)
+        initDeck(dataChannel)
+      else 
+        console.log(`No channel '${dataChannelName}' found`)
+    })
   }
 });
 
@@ -121,7 +136,7 @@ function initDeckChannel(msg, name) {
   const deckChannelName = name
   const deckChannel = msg.guild.channels.find(c => c.name == deckChannelName)
   if (!deckChannel) {
-    msg.reply(`Channel '${name}' not found`).catch(console.error)
+      msg.reply(`Channel '${name}' not found`).catch(console.error)
     return
   }
 
@@ -151,5 +166,6 @@ function initDeck(channel, msg = null) {
     })
     if (msg)
       msg.reply(report).catch(console.error)
+    console.log(report)
   })
 }
