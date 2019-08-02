@@ -27,7 +27,6 @@ client.on('ready', () => {
   
   client.guilds.forEach(g => {
     const dataChannel = g.channels.find(c => c.name === dataChannelName)
-    console.log(JSON.stringify(dataChannel))
     if (dataChannel)
       initDeck(dataChannel)
     else 
@@ -91,6 +90,12 @@ function postEmoji(name, link, msg = null) {
 
 client.on('message', msg => {
   let content = msg.content
+
+  if (msg.content === "stay night")
+  {
+    postFateQuote(msg)
+    handleDrawCommand(msg, 'fate')
+  }
   if (content.substring(0, 1) == '!') {
     let args = content.substring(1).split(/\s/);
     let cmd = args[0];
@@ -168,4 +173,20 @@ function initDeck(channel, msg = null) {
       msg.reply(report).catch(console.error)
     console.log(report)
   })
+}
+
+function postFateQuote(msg) {
+  const quotes = [
+    'I am the bone of my sword.',
+'Steel is my body, and fire is my blood.',
+'I have created over a thousand blades,',
+'Unknown to death,',
+'Nor known to life.',
+'Have withstood pain to create many weapons.',
+'Yet those hands will never hold anything.',
+'So, as I pray - Unlimited Blade Works!',
+  ]
+  const quote = quotes[Math.floor(Math.random() * quotes.length)]
+  const formattedQuote = `> ${quote}`
+  msg.channel.send(formattedQuote).catch(console.error)
 }
